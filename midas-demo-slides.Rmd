@@ -295,14 +295,23 @@ slide_result =
         dat = x %>% list(),
         coefs = x %>%
           complete(time_value = full_seq(time_value, 1L)) %>%
-          lm(formula = case_rate_7d_av ~ lag(percent_cli, 7L) + lag(percent_cli, 14L)) %>%
+          lm(formula = case_rate_7d_av ~ lag(case_rate_7d_av, 7L) + lag(case_rate_7d_av, 14L) + 0) %>%
           coef() %>%
           list()
       )
     }, n=90L, group_by=geo_value, ref_time_values = seq(as.Date("2020-06-01")+89L, as.Date("2021-11-30"), by="week")) %>%
   rename(as_of = time_value)
+```
+
+## `epiprocess::epix_slide`
+
+```{r}
 slide_result
 ```
+
+::: notes
+- (Note that data latency cuts into the amount of data available in the window.  For this JHU-CSSE case data, it's only 1 day out of the 90 day window, but we must be careful with indexing.)
+:::
 
 ## `epiprocess::epix_slide`
 
@@ -312,8 +321,7 @@ slide_result
 # -------------------------------
 slide_result_facets = c(
   "Coefficients by date of (pseudoprospective) fit",
-  "Target data by time_value",
-  "Predictor data by time_value"
+  "Signal data by time_value"
 ) %>%
   {factor(., levels=.)}
 slide_result %>%
@@ -321,7 +329,7 @@ slide_result %>%
   filter(geo_value == "ny") %>%
   mutate(facet = slide_result_facets[[1L]]) %>%
   ggplot() +
-  facet_wrap(~ facet, ncol=1L) +
+  facet_wrap(~ facet, ncol=1L, scales="free_y") +
   geom_line(
     aes(as_of, coefficient, linetype=feature)
   ) +
@@ -334,20 +342,17 @@ slide_result %>%
       filter(geo_value == "ny") %>%
       mutate(facet = slide_result_facets[[2L]])
   ) +
-  geom_line(
-    aes(time_value, percent_cli, colour=as_of, group=as_of),
-    slide_result %>%
-      # transmute(as_of = ordered(as_of), slide_value_dat) %>%
-      transmute(as_of = as_of, slide_value_dat) %>%
-      unnest(slide_value_dat) %>%
-      filter(geo_value == "ny") %>%
-      mutate(facet = slide_result_facets[[3L]])
-  ) +
   guides(linetype = guide_legend(order=1L),
          colour = guide_legend(order=2L)) +
-  xlab("as_of for coefficients / time_value for signals")
+  xlab("as_of for coefficients / time_value for signals") +
+  ylab("coefficient / (unlagged) value")
 ```
 
-<!-- FIXME coefficients of intercept and covariate not comparable -->
+::: notes
+- note that revisions and latency aren't very prominent in this toy data set,
+but are in other disease forecasting targets and predictors
+:::
+
+<!-- TODO move `epidatr` material here and segue from above note? -->
 
 # TODO `epipredict`
