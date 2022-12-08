@@ -18,38 +18,36 @@ output:
 `xaringan::inf_mr("midas-demo-slides.Rmd")`.
 -->
 
-# TODO Ryan overview
-
-# TODO `epidatr`
-
-# `epiprocess` overview
-
-| Vectors         | `epi_df`s         |              `epi_archive`s |
-|:---------------:|:-----------------:|----------------------------:|
-|                 |                   |                             |
-| `growth_rate`   | `epi_cor`         |                             |
-| `detect_outlr*` |                   |                             |
-|                 |                   |                             |
-|                 |                   |                `epix_as_of` |
-|                 |                   |                             |
-|                 | `dplyr::*`        |                             |
-|                 | `tsibble` interop |                             |
-|                 |                   |                             |
-|                 | `epi_slide`       |                `epix_slide` |
-|                 |                   |                             |
-|                 |                   | `epix_fill_through_version` |
-|                 |                   |                `epix_merge` |
-|                 |                   |                             |
-|                 | toy data set      |                toy data set |
-
-## `epiprocess` toy data
-
+<!-- Add scroll bars within slides: -->
 ```{css, echo=FALSE}
 .slide {
     height: 750px;
     overflow-y: auto !important;
 }
 ```
+
+<!-- Place plots on a separate second-lever slide, repeating the most recent second-level slide title: -->
+```{r, include=FALSE}
+# knitr::knit_hooks$restore("text") # encounters error looking up default
+default_text_hook = knitr::knit_hooks$get("text")
+previous_l2_heading = NULL
+knitr::knit_hooks$set(text = function(x) {
+  previous_l2_heading <<- stringi::stri_match_last_regex(x, pattern="\n##.*\n")
+  default_text_hook(x)
+})
+# knitr::knit_hooks$restore("plot") # encounters error looking up default
+default_plot_hook = knitr::knit_hooks$get("plot")
+knitr::knit_hooks$set(plot = function(x, options) {
+  paste0(previous_l2_heading, default_plot_hook(x, options))
+})
+```
+
+# TODO Ryan overview
+
+
+# `epiprocess`
+
+## `epiprocess` toy data
 
 For this demo (scroll for full attribution, license):
 ```{r, echo=FALSE, results="asis"}
@@ -70,7 +68,7 @@ withr::with_options(
 )
 ```
 
----
+## `epiprocess` toy data
 
 For this demo (scroll for full attribution, license):
 ```{r, echo=FALSE, results="asis"}
@@ -91,27 +89,11 @@ withr::with_options(
 )
 ```
 
-<!-- FIXME discuss completion approaches in epidatr material; grouped complete & joint complete -->
+## `epiprocess::epi_df`
 
-```{r, include=FALSE}
-# knitr::knit_hooks$restore("text") # encounters error looking up default
-default_text_hook = knitr::knit_hooks$get("text")
-previous_l2_heading = NULL
-knitr::knit_hooks$set(text = function(x) {
-  previous_l2_heading <<- stringi::stri_match_last_regex(x, pattern="\n##.*\n")
-  default_text_hook(x)
-})
-# knitr::knit_hooks$restore("plot") # encounters error looking up default
-default_plot_hook = knitr::knit_hooks$get("plot")
-knitr::knit_hooks$set(plot = function(x, options) {
-  paste0(previous_l2_heading, default_plot_hook(x, options))
-})
-```
+Snapshot of an epi surveillance data set; a specialized data frame.
 
-## `epiprocess::growth_rate`
-
-Prepared from `jhu_csse_daily_subset`
-```{r, message=FALSE, warning=FALSE}
+```{r}
 library(epiprocess)
 library(dplyr)
 library(tidyr)
@@ -119,10 +101,21 @@ library(tibble)
 library(purrr)
 library(ggplot2)
 
+jhu_csse_daily_subset
+```
+
+::: notes
+- Some methods, like `epi_cor` and `epi_slide` (next), operate on `epi_df`s, while others produce them.
+:::
+
+## `epiprocess::growth_rate`
+
+Prepared from `jhu_csse_daily_subset`
+```{r, message=FALSE, warning=FALSE}
+# vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 # Note that the `jhu_csse_daily_subset` object already contains regularly-spaced
 # time values, and the same time values for every geo value, so it doesn't
 # require preprocessing via `complete`.
-
 jhu_csse_daily_subset %>%
   group_by(geo_value) %>%
   mutate(
@@ -137,19 +130,19 @@ jhu_csse_daily_subset %>%
            time_value >= as.Date("2020-04-01"),
          across(c(cases_gr1, cases_gr2), ~ magrittr::inset(.x, !include_gr, NA)),
          include_gr = NULL) %>%
+# ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
   # -------------------------------
   # ---------- plotting: ----------
   # -------------------------------
   filter(geo_value == "ca") %>%
   pivot_longer(c(cases, cases_gr1, cases_gr2), names_to="signal", values_to="value") %>%
   mutate(facet = dplyr::recode_factor(signal,
-                                      cases = "Cases",
-                                      cases_gr1 = "Case Growth Rate",
-                                      cases_gr2 = "Case Growth Rate")) %>%
+                                      cases = "(CA) Cases",
+                                      cases_gr1 = "(CA) Case Growth Rate",
+                                      cases_gr2 = "(CA) Case Growth Rate")) %>%
   ggplot(aes(time_value, value, colour=signal)) +
   facet_wrap(~ facet, ncol=1L, scales="free_y") +
   geom_line(na.rm=TRUE)
-
 ```
 
 <!-- TODO add direction annotations derived from these growth rates? -->
@@ -162,11 +155,13 @@ jhu_csse_daily_subset %>%
 ## `epiprocess::detect_outlr*`
 
 ```{r}
+# vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 with_outlier_info =
   jhu_csse_daily_subset %>%
   select(geo_value, time_value, cases) %>%
   group_by(geo_value) %>%
   mutate(outlier_info = detect_outlr_rm(time_value, cases))
+# ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 # -------------------------------
 # ---------- Plotting: ----------
 # -------------------------------
@@ -202,17 +197,20 @@ with_outlier_info %>%
 
 Kendall correlations across a limited (toy) set of `geo_value`s between deaths and cases 21 days prior, by `time_value`:
 ```{r}
+# vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 cors =
   jhu_csse_daily_subset %>%
-  epi_cor(death_rate_7d_av, case_rate_7d_av, dt2 = -21L, cor_by = "time_value", method="kendall")
+  epi_cor(death_rate_7d_av, case_rate_7d_av, dt2 = -21L,
+          cor_by = "time_value", method="kendall")
+# ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+# -------------------------------
+# ---------- Plotting: ----------
+# -------------------------------
 cor_facets =
   c("Kendall correlations between deaths & 21d-lagged cases, across geos, by time",
     "Death rates",
     "21d-lagged case rates") %>%
   {factor(., levels=.)}
-# -------------------------------
-# ---------- Plotting: ----------
-# -------------------------------
 cors %>%
   mutate(facet = cor_facets[[1L]]) %>%
   ggplot(aes(x = time_value, y = cor)) +
@@ -224,7 +222,8 @@ cors %>%
               group_by(geo_value) %>%
               mutate(case_rate_7d_av = lag(case_rate_7d_av, 21L)) %>%
               ungroup() %>%
-              mutate(facet = cor_facets[[3L]])) +
+              mutate(facet = cor_facets[[3L]]),
+            na.rm=TRUE) +
   facet_wrap(~ facet, ncol=1L, scales="free_y") +
   scale_x_date(minor_breaks = "month", date_labels = "%b '%y") +
   labs(x = "Date", y = "Correlation")
@@ -235,18 +234,6 @@ cors %>%
 - Since this is only using a few locations, extreme values are expected to be more common.
 :::
 
-## `epiprocess::epi_df`
-
-Snapshot of an epi surveillance data set; a specialized data frame.
-
-```{r}
-jhu_csse_daily_subset
-```
-
-::: notes
-- Some methods, like `epi_cor` and `epi_slide` (next), operate on `epi_df`s, while others produce them.
-:::
-
 ## `epiprocess::epi_slide`
 
 Optionally-grouped, rolling time window calculations:
@@ -255,12 +242,14 @@ sum_of_k_else_na = function(x, k) {
   if (length(x) == k) sum(x) else vctrs::vec_cast(NA, x)
 }
 n_geos = nrow(distinct(jhu_csse_daily_subset, geo_value))
+# vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 jhu_csse_daily_subset %>%
   select(geo_value, time_value, cases) %>%
   group_by(geo_value) %>%
   epi_slide(same_geo_7d_sum = sum_of_k_else_na(cases, 7L), n=7L) %>%
   ungroup() %>%
   epi_slide(cross_geo_7d_sum = sum_of_k_else_na(cases, 7L*n_geos), n=7L) %>%
+# ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
   # -------------------------------
   # ---------- plotting: ----------
   # -------------------------------
@@ -272,6 +261,9 @@ jhu_csse_daily_subset %>%
 
 <!-- TODO list perceived use cases? -->
 <!-- https://github.com/cmu-delphi/epiprocess/issues/256 -->
+
+
+<!-- FIXME discuss completion approaches in epidatr material; grouped complete & joint complete -->
 
 ## `epiprocess::epi_archive`
 
@@ -285,22 +277,21 @@ archive_cases_dv_subset$DT
 
 ## `epiprocess::epix_slide`
 
-Version-aware counterpart to `epi_slide`.  Performs a time-windowed calculation using snapshot as of each of the requested `ref_time_values`.
+Version-aware counterpart to `epi_slide`.  Performs a time-windowed calculation using snapshot of data as of each of the requested `ref_time_values`.
 ```{r}
+# vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 slide_result =
   archive_cases_dv_subset %>%
-  epix_slide(
-    function(x, grp) {
-      tibble(
-        dat = x %>% list(),
-        coefs = x %>%
-          complete(time_value = full_seq(time_value, 1L)) %>%
-          lm(formula = case_rate_7d_av ~ lag(case_rate_7d_av, 7L) + lag(case_rate_7d_av, 14L) + 0) %>%
-          coef() %>%
-          list()
-      )
-    }, n=90L, group_by=geo_value, ref_time_values = seq(as.Date("2020-06-01")+89L, as.Date("2021-11-30"), by="week")) %>%
+  epix_slide(~ tibble(
+    dat = .x %>% list(),
+    coefs = .x %>%
+      complete(time_value = full_seq(time_value, 1L)) %>%
+      lm(formula = case_rate_7d_av ~ lag(case_rate_7d_av, 7L) + lag(case_rate_7d_av, 14L) + 0) %>%
+      coef() %>%
+      list()
+  ), n=90L, group_by=geo_value, ref_time_values = seq(as.Date("2020-06-01")+89L, as.Date("2021-11-30"), by="week")) %>%
   rename(as_of = time_value)
+# ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ```
 
 ## `epiprocess::epix_slide`
@@ -354,5 +345,28 @@ but are in other disease forecasting targets and predictors
 :::
 
 <!-- TODO move `epidatr` material here and segue from above note? -->
+
+## `epiprocess` overview
+
+| Vectors         | `epi_df`s         |              `epi_archive`s |
+|:---------------:|:-----------------:|----------------------------:|
+|                 |                   |                             |
+| `growth_rate`   | `epi_cor`         |                             |
+| `detect_outlr*` |                   |                             |
+|                 |                   |                             |
+|                 |                   |                `epix_as_of` |
+|                 |                   |                             |
+|                 | `dplyr::*`        |                             |
+|                 | `tsibble` interop |                             |
+|                 |                   |                             |
+|                 | `epi_slide`       |                `epix_slide` |
+|                 |                   |                             |
+|                 |                   | `epix_fill_through_version` |
+|                 |                   |                `epix_merge` |
+|                 |                   |                             |
+|                 | toy data set      |                toy data set |
+
+
+# TODO `epidatr`
 
 # TODO `epipredict`
