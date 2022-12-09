@@ -310,9 +310,11 @@ ggplot(snapshots %>% filter(!latest),
                inherit.aes = FALSE, color = "black")
 ```
 
+::: notes
 * Easy to inspect revision behaviour
 * Can use it for pseudo-prospective forecasts
 * Compare to our procedure for the PNAS article &mdash; store every version as a `.csv` and load them individually
+:::
 
 ## `epiprocess::epix_slide`
 
