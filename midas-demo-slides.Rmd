@@ -1,16 +1,20 @@
 ---
-title: "midas demo slides"
-author: "LCB"
+title: "Tooling update"
+author: "Slides: Logan Brooks, Daniel McDonald, Ryan Tibshirani"
+#
+# NOTE this link may be required here by upstream GPL-3 slides
+date: 2022-12-13 <br /> <small> <https://github.com/brookslogan/tooling-slides-for-modelers> </small>
+#
 output:
   revealjs::revealjs_presentation:
     theme: night
     highlight: zenburn
-    # Nicer, but larger and doesn't render on Drive:
+    # Nicer, but larger:
     #
     self_contained: false
     reveal_plugins: ["notes","search","menu"]
     #
-    # Self-contained html that hopefully renders on Drive:
+    # Self-contained html:
     # self_contained: true
 ---
 
@@ -26,7 +30,8 @@ output:
 }
 ```
 
-<!-- Place plots on a separate second-lever slide, repeating the most recent second-level slide title: -->
+<!-- Place plots on a separate second-lever slide from plotting code,
+     repeating the most recent second-level slide title: -->
 ```{r, include=FALSE}
 # knitr::knit_hooks$restore("text") # encounters error looking up default
 default_text_hook = knitr::knit_hooks$get("text")
@@ -38,18 +43,26 @@ knitr::knit_hooks$set(text = function(x) {
 # knitr::knit_hooks$restore("plot") # encounters error looking up default
 default_plot_hook = knitr::knit_hooks$get("plot")
 knitr::knit_hooks$set(plot = function(x, options) {
-  paste0(previous_l2_heading, default_plot_hook(x, options))
+  if (identical(knitr::opts_current$get("echo"), FALSE)) {
+    default_plot_hook(x, options)
+  } else {
+    paste0(previous_l2_heading, default_plot_hook(x, options))
+  }
 })
 ```
+
+# TODO package author slide & working group background
 
 # TODO Ryan overview
 
 
-# `epiprocess`
+# `{epiprocess}`
 
-## `epiprocess` toy data
+<https://cmu-delphi.github.io/epiprocess>
 
-For this demo (scroll for full attribution, license):
+## Toy `epi_df` (included in {`epiprocess`})
+
+Scroll for full attribution, license:
 ```{r, echo=FALSE, results="asis"}
 withr::with_options(
   code={
@@ -68,9 +81,8 @@ withr::with_options(
 )
 ```
 
-## `epiprocess` toy data
+## Toy `epi_archive` (included in {`epiprocess`})
 
-For this demo (scroll for full attribution, license):
 ```{r, echo=FALSE, results="asis"}
 withr::with_options(
   code={
@@ -109,6 +121,8 @@ jhu_csse_daily_subset
 :::
 
 ## `epiprocess::growth_rate`
+
+<!-- FIXME discuss completion approaches in epidatr material -->
 
 Prepared from `jhu_csse_daily_subset`
 ```{r, message=FALSE, warning=FALSE}
@@ -263,8 +277,6 @@ jhu_csse_daily_subset %>%
 <!-- https://github.com/cmu-delphi/epiprocess/issues/256 -->
 
 
-<!-- FIXME discuss completion approaches in epidatr material; grouped complete & joint complete -->
-
 ## `epiprocess::epi_archive`
 
 Version history (and present) of an epi surveillance data set.
@@ -273,7 +285,34 @@ archive_cases_dv_subset
 archive_cases_dv_subset$DT
 ```
 
-## TODO Dan archive slides
+## Examining an `epi_archive`
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+x <- archive_cases_dv_subset
+x_latest <- epix_as_of(x, max_version = x$versions_end)
+versions = seq(as.Date("2020-06-01"), x$versions_end - 1, by = "1 month")
+snapshots <- map_dfr(versions, function(v) {
+  epix_as_of(x, max_version = v) %>% mutate(version = v)}) %>%
+  bind_rows(x_latest %>% mutate(version = x$versions_end)) %>%
+  mutate(latest = version == x$versions_end) %>%
+  filter(geo_value %in% c("ca", "fl"))
+
+ggplot(snapshots %>% filter(!latest),
+            aes(x = time_value, y = percent_cli)) +
+  geom_line(aes(color = factor(version))) +
+  geom_vline(aes(color = factor(version), xintercept = version), lty = 2) +
+  facet_wrap(~ geo_value, scales = "free_y", nrow = 1) +
+  scale_x_date(minor_breaks = "month", date_labels = "%b %y") +
+  labs(x = "Date", y = "% of doctor's visits with CLI") +
+  theme(legend.position = "none") +
+  geom_line(data = snapshots %>% filter(latest),
+               aes(x = time_value, y = percent_cli),
+               inherit.aes = FALSE, color = "black")
+```
+
+* Easy to inspect revision behaviour
+* Can use it for pseudo-prospective forecasts
+* Compare to our procedure for the PNAS article &mdash; store every version as a `.csv` and load them individually
 
 ## `epiprocess::epix_slide`
 
@@ -367,6 +406,10 @@ but are in other disease forecasting targets and predictors
 |                 | toy data set      |                toy data set |
 
 
-# TODO `epidatr`
+# TODO `{epidatr}`
 
-# TODO `epipredict`
+# `{epipredict}`
+
+<https://cmu-delphi.github.io/epipredict>
+
+## TODO borrow Dan's slides / changelog

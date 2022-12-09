@@ -1,0 +1,8 @@
+* Contains original material.
+* May contain material based on cmu-delphi.github.io/epiprocess/ documentation.
+* Uses data objects from the `epiprocess` package; see compiled presentation
+  slides for associated license and attribution, and the .Rmd for further
+  modifications.
+* Contains material from https://github.com/dajmcdon/delphi-research-tooling,
+  ported and modified to fit in this presentation. Date of first port:
+  2022-12-08.
