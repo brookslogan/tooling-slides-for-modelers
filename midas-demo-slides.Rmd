@@ -30,6 +30,10 @@ output:
 }
 ```
 
+```{r, echo=FALSE}
+theme_set(theme_bw())
+```
+
 <!-- Place plots on a separate second-lever slide from plotting code,
      repeating the most recent second-level slide title: -->
 ```{r, include=FALSE}
@@ -180,7 +184,9 @@ with_outlier_info =
   mutate(outlier_info = detect_outlr_rm(time_value, cases))
 ```
 
-```r previous_l2_heading```
+`r previous_l2_heading`
+
+Plot for CA:
 
 ```{r, echo=FALSE}
 outlier_facets =
@@ -195,9 +201,12 @@ with_outlier_info %>%
   geom_line() +
   geom_ribbon(colour = "red", linetype="dashed", fill = NA) +
   facet_wrap(~ facet, ncol=1L) +
-  geom_line(data = function(df) df %>% mutate(facet = outlier_facets[[2L]]), linetype = "dashed") +
-  geom_line(data = function(df) df %>% mutate(facet = outlier_facets[[2L]]), colour = "blue",
-            mapping = aes(y = replacement))
+  geom_point(data = function(df) df %>% filter(cases != replacement) %>%
+                                   mutate(facet = outlier_facets[[2L]]),
+             colour="orange") +
+  geom_line(aes(y = replacement),
+            data = function(df) df %>% mutate(facet = outlier_facets[[2L]]),
+            colour = "blue")
 ```
 
 ::: notes
@@ -213,15 +222,26 @@ with_outlier_info %>%
 
 ## `epiprocess::epi_cor`
 
-Kendall correlations across a limited (toy) set of `geo_value`s between deaths and cases 21 days prior, by `time_value`:
 ```{r}
 cors =
   jhu_csse_daily_subset %>%
-  epi_cor(death_rate_7d_av, case_rate_7d_av, dt2 = -21L,
-          cor_by = "time_value", method="kendall")
+  epi_cor(death_rate_7d_av, case_rate_7d_av,
+          dt2 = -21L,
+          cor_by = "time_value",
+          method="kendall")
 ```
 
-```r previous_l2_heading```
+<section style="text-align: left">
+
+Kendall correlations
+
+- across `geo_value`s
+- between deaths and cases 21 days prior
+- by `time_value`
+
+</section>
+
+`r previous_l2_heading`
 
 ```{r, echo=FALSE}
 cor_facets =
@@ -246,6 +266,8 @@ cors %>%
   scale_x_date(minor_breaks = "month", date_labels = "%b '%y") +
   labs(x = "Date", y = "Correlation")
 ```
+
+(Note there are only 6 geos in this example data object.)
 
 ::: notes
 - Roughly, do weekly case rates 21 days ago seem helpful in determining whether one state will have higher weekly death rates than another, and does that usefulness vary across time?
