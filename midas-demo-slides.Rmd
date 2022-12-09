@@ -148,6 +148,8 @@ with_growth_rates =
 
 ```r previous_l2_heading```
 
+Plot for CA:
+
 ```{r, echo=FALSE}
 with_growth_rates %>%
   filter(geo_value == "ca") %>%
@@ -269,12 +271,14 @@ with_sum_features =
 
 `r previous_l2_heading`
 
+Plot for FL:
+
 ```{r, echo=FALSE}
 with_sum_features %>%
   filter(geo_value == "fl") %>%
   pivot_longer(c(cases, same_geo_7d_sum, cross_geo_7d_sum), names_to="signal", values_to="value") %>%
   ggplot(aes(time_value, value, colour=signal)) +
-  geom_line(na.omit=TRUE)
+  geom_line(na.rm=TRUE)
 ```
 
 <!-- TODO list perceived use cases? -->
@@ -300,6 +304,8 @@ archive_cases_dv_subset$DT
 
 ## Examining an `epi_archive`
 
+Plot for FL:
+
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
 x <- archive_cases_dv_subset
 x_latest <- epix_as_of(x, max_version = x$versions_end)
@@ -308,13 +314,12 @@ snapshots <- map_dfr(versions, function(v) {
   epix_as_of(x, max_version = v) %>% mutate(version = v)}) %>%
   bind_rows(x_latest %>% mutate(version = x$versions_end)) %>%
   mutate(latest = version == x$versions_end) %>%
-  filter(geo_value %in% c("ca", "fl"))
+  filter(geo_value == "fl")
 
 ggplot(snapshots %>% filter(!latest),
             aes(x = time_value, y = percent_cli)) +
   geom_line(aes(color = factor(version))) +
   geom_vline(aes(color = factor(version), xintercept = version), lty = 2) +
-  facet_wrap(~ geo_value, scales = "free_y", nrow = 1) +
   scale_x_date(minor_breaks = "month", date_labels = "%b %y") +
   labs(x = "Date", y = "% of doctor's visits with CLI") +
   theme(legend.position = "none") +
@@ -329,14 +334,16 @@ ggplot(snapshots %>% filter(!latest),
 * Compare to our procedure for the PNAS article &mdash; store every version as a `.csv` and load them individually
 :::
 
+<!-- TODO combine with the below -->
+
 ## `epiprocess::epix_slide`
 
-Version-aware counterpart to `epi_slide`.  Performs a time-windowed calculation using snapshot of data as of each of the requested `ref_time_values`.
+Version-aware counterpart to `epi_slide`; combines time windowing and as-of-ing.
 ```{r}
 slide_result =
   archive_cases_dv_subset %>%
   epix_slide(~ tibble(
-    dat = .x %>% list(),
+    group_snapshot = list(.x),
     coefs = .x %>%
       complete(time_value = full_seq(time_value, 1L)) %>%
       lm(formula = case_rate_7d_av ~ lag(case_rate_7d_av, 7L) + lag(case_rate_7d_av, 14L) + 0) %>%
@@ -358,6 +365,8 @@ slide_result
 
 ## `epiprocess::epix_slide`
 
+Plot for NY:
+
 ```{r, echo=FALSE}
 slide_result_facets = c(
   "Coefficients by date of (pseudoprospective) fit",
@@ -376,8 +385,8 @@ slide_result %>%
   geom_line(
     aes(time_value, case_rate_7d_av, colour=as_of, group=as_of),
     slide_result %>%
-      transmute(as_of = as_of, slide_value_dat) %>%
-      unnest(slide_value_dat) %>%
+      transmute(as_of = as_of, slide_value_group_snapshot) %>%
+      unnest(slide_value_group_snapshot) %>%
       filter(geo_value == "ny") %>%
       mutate(facet = slide_result_facets[[2L]])
   ) +
