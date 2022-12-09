@@ -53,8 +53,7 @@ knitr::knit_hooks$set(plot = function(x, options) {
 
 # TODO package author slide & working group background
 
-# TODO Ryan overview
-
+# {data-background-image=`r xfun::base64_uri("resources/ToolingOverview.png")`}
 
 # `{epiprocess}`
 
