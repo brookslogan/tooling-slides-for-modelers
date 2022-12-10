@@ -179,9 +179,9 @@ with_growth_rates %>%
 ```{r}
 with_outlier_info =
   jhu_csse_daily_subset %>%
-  select(geo_value, time_value, cases) %>%
   group_by(geo_value) %>%
-  mutate(outlier_info = detect_outlr_rm(time_value, cases))
+  mutate(cases_outlier_info = detect_outlr_rm(time_value, cases)) %>%
+  ungroup()
 ```
 
 `r previous_l2_heading`
@@ -194,7 +194,7 @@ outlier_facets =
     "Replacement values are available for simple outlier corrections") %>%
   {factor(., levels=.)} # (to avoid facet alphabetization)
 with_outlier_info %>%
-  unpack(outlier_info) %>%
+  unpack(cases_outlier_info) %>%
   filter(geo_value == "ca") %>%
   mutate(facet = outlier_facets[[1L]]) %>%
   ggplot(aes(time_value, cases, ymin=lower, ymax=upper)) +
@@ -235,7 +235,7 @@ cors =
 
 Kendall correlations
 
-- across `geo_value`s
+- across `geo_value`s (only 6 of them in this sample data)
 - between deaths and cases 21 days prior
 - by `time_value`
 
@@ -267,9 +267,8 @@ cors %>%
   labs(x = "Date", y = "Correlation")
 ```
 
-(Note there are only 6 geos in this example data object.)
-
 ::: notes
+- Note there are only 6 geos in this example data object.
 - Roughly, do weekly case rates 21 days ago seem helpful in determining whether one state will have higher weekly death rates than another, and does that usefulness vary across time?
 - Since this is only using a few locations, extreme values are expected to be more common.
 :::
@@ -326,7 +325,7 @@ archive_cases_dv_subset$DT
 
 ## Examining an `epi_archive`
 
-Plot for FL:
+Some snapshots of an outpatient %CLI signal for FL:
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
 x <- archive_cases_dv_subset
@@ -340,14 +339,15 @@ snapshots <- map_dfr(versions, function(v) {
 
 ggplot(snapshots %>% filter(!latest),
             aes(x = time_value, y = percent_cli)) +
-  geom_line(aes(color = factor(version))) +
-  geom_vline(aes(color = factor(version), xintercept = version), lty = 2) +
+  geom_line(aes(colour = version, group = version)) +
+  geom_vline(aes(colour = version, xintercept = version), lty = 2) +
+  khroma::scale_colour_smoothrainbow(range=c(0.15, 1), trans="date") +
   scale_x_date(minor_breaks = "month", date_labels = "%b %y") +
   labs(x = "Date", y = "% of doctor's visits with CLI") +
   theme(legend.position = "none") +
   geom_line(data = snapshots %>% filter(latest),
                aes(x = time_value, y = percent_cli),
-               inherit.aes = FALSE, color = "black")
+            inherit.aes = FALSE, color = "black")
 ```
 
 ::: notes
@@ -412,6 +412,7 @@ slide_result %>%
       filter(geo_value == "ny") %>%
       mutate(facet = slide_result_facets[[2L]])
   ) +
+  khroma::scale_colour_smoothrainbow(range=c(0.15, 1), trans="date") +
   guides(linetype = guide_legend(order=1L),
          colour = guide_legend(order=2L)) +
   xlab("as_of for coefficients / time_value for signals") +
