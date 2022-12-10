@@ -150,7 +150,7 @@ with_growth_rates =
          cases_gr2 = if_else(include_gr, cases_gr2, NA_real_))
 ```
 
-```r previous_l2_heading```
+`r previous_l2_heading`
 
 Plot for CA:
 
