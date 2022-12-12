@@ -70,47 +70,6 @@ knitr::knit_hooks$set(plot = function(x, options) {
 
 <https://cmu-delphi.github.io/epiprocess>
 
-## Toy `epi_df` (included in {`epiprocess`})
-
-Scroll for full attribution, license:
-```{r, echo=FALSE, results="asis"}
-withr::with_options(
-  code={
-    print(help("jhu_csse_daily_subset", package="epiprocess", help_type="text"))
-  },
-  list(pager=function(files, header, title, delete.file) {
-    on.exit({
-      unlink(files)
-    })
-    cat(paste(c("<pre>",purrr::reduce(purrr::map(files, function(file) {
-      # gsub("</?u>","_",gsub("</u>( *)<u>","\\1",
-      gsub("_\b(.)", "<u>\\1</u>", readLines(file))
-      # ))
-    }), function(x, y) c(x,"\n\n\n",y)), "</pre>"), collapse="\n"))
-  })
-)
-```
-
-## Toy `epi_archive` (included in {`epiprocess`})
-
-```{r, echo=FALSE, results="asis"}
-withr::with_options(
-  code={
-    print(help("archive_cases_dv_subset", package="epiprocess", help_type="text"))
-  },
-  list(pager=function(files, header, title, delete.file) {
-    on.exit({
-      unlink(files)
-    })
-    cat(paste(c("<pre>",purrr::reduce(purrr::map(files, function(file) {
-      # gsub("</?u>","_",gsub("</u>( *)<u>","\\1",
-      gsub("_\b(.)", "<u>\\1</u>", readLines(file))
-      # ))
-    }), function(x, y) c(x,"\n\n\n",y)), "</pre>"), collapse="\n"))
-  })
-)
-```
-
 ## `epiprocess::epi_df`
 
 Snapshot of an epi surveillance data set; a specialized data frame.
@@ -119,11 +78,31 @@ Snapshot of an epi surveillance data set; a specialized data frame.
 jhu_csse_daily_subset
 ```
 
+```{r, echo=FALSE, results="asis"}
+withr::with_options(
+  code={
+    cat("<details><summary>Data object documentation, license, attribution</summary>")
+    print(help("jhu_csse_daily_subset", package="epiprocess", help_type="text"))
+    cat("</details>")
+  },
+  list(pager=function(files, header, title, delete.file) {
+    on.exit({
+      unlink(files)
+    })
+    cat(paste(c("<pre>",purrr::reduce(purrr::map(files, function(file) {
+      # gsub("</?u>","_",gsub("</u>( *)<u>","\\1",
+      gsub("_\b(.)", "<u>\\1</u>", readLines(file))
+      # ))
+    }), function(x, y) c(x,"\n\n\n",y)), "</pre>"), collapse="\n"))
+  })
+)
+```
+
 ::: notes
 - Some methods, like `epi_cor` and `epi_slide` (next), operate on `epi_df`s, while others produce them.
 :::
 
-## Preprocessing
+## TODO Preprocessing
 
 ## `epiprocess::growth_rate`
 
@@ -312,6 +291,27 @@ Version history (and present) of an epi surveillance data set.
 archive_cases_dv_subset
 ```
 
+```{r, echo=FALSE, results="asis"}
+withr::with_options(
+  code={
+    cat("<details><summary>Data object documentation, license, attribution</summary>")
+    print(help("archive_cases_dv_subset", package="epiprocess", help_type="text"))
+    cat("</details>")
+  },
+  list(pager=function(files, header, title, delete.file) {
+    on.exit({
+      unlink(files)
+    })
+    cat(paste(c("<pre>",purrr::reduce(purrr::map(files, function(file) {
+      # gsub("</?u>","_",gsub("</u>( *)<u>","\\1",
+      gsub("_\b(.)", "<u>\\1</u>", readLines(file))
+      # ))
+    }), function(x, y) c(x,"\n\n\n",y)), "</pre>"), collapse="\n"))
+  })
+)
+```
+
+
 ---
 
 Underlying version data:
@@ -339,7 +339,7 @@ snapshots <- map_dfr(versions, function(v) {
 
 ggplot(snapshots %>% filter(!latest),
             aes(x = time_value, y = percent_cli)) +
-  geom_line(aes(colour = version, group = version)) +
+  geom_line(aes(colour = version, group = version), na.rm=TRUE) +
   geom_vline(aes(colour = version, xintercept = version), lty = 2) +
   khroma::scale_colour_smoothrainbow(range=c(0.15, 1), trans="date") +
   scale_x_date(minor_breaks = "month", date_labels = "%b %y") +
@@ -347,7 +347,7 @@ ggplot(snapshots %>% filter(!latest),
   theme(legend.position = "none") +
   geom_line(data = snapshots %>% filter(latest),
                aes(x = time_value, y = percent_cli),
-            inherit.aes = FALSE, color = "black")
+            inherit.aes = FALSE, color = "black", na.rm=TRUE)
 ```
 
 ::: notes
