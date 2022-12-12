@@ -102,7 +102,45 @@ withr::with_options(
 - Some methods, like `epi_cor` and `epi_slide` (next), operate on `epi_df`s, while others produce them.
 :::
 
-## TODO Preprocessing
+## Preprocessing
+
+```{r}
+completed_jhu_csse_daily_subset =
+  jhu_csse_daily_subset %>%
+  complete(geo_value, time_value = full_seq(time_value, period=1), explicit=FALSE) %>%
+  as_epi_df(as_of = attr(jhu_csse_daily_subset, "metadata")$as_of)
+```
+
+<section style="text-align: left">
+makes:
+
+ - `time_value`s evenly spaced
+ - `time_value`s the same for every geo
+ - filled-in measurements (rows) have NA values
+
+Unchecked requirements of some functions in `dplyr`, `epiprocess`
+
+</section>
+
+```{r}
+alternative_completed_jhu_csse_daily_subset =
+  jhu_csse_daily_subset %>%
+  group_by(geo_value) %>%
+  complete(time_value = full_seq(time_value, period=1), fill=list(cases=0), explicit=FALSE) %>%
+  ungroup() %>%
+  as_epi_df(as_of = attr(jhu_csse_daily_subset, "metadata")$as_of)
+```
+
+::: notes
+Alternative approach:
+
+- `time_value` range can differ by geo
+- filled-in measurements (rows) have NA values except `cases` uses 0s
+
+Have `complete.epi_df` method on list of todos.
+
+Actually, both of these are identical to the original, since the original already was complete in the first sense, and was arranged in the same way.
+:::
 
 ## `epiprocess::growth_rate`
 
@@ -113,7 +151,7 @@ withr::with_options(
 # time values, and the same time values for every geo value, so it doesn't
 # require preprocessing via `complete`.
 with_growth_rates =
-  jhu_csse_daily_subset %>%
+  completed_jhu_csse_daily_subset %>%
   group_by(geo_value) %>%
   mutate(
     cases_gr1 = growth_rate(time_value, cases, method = "rel_change", h=14L),
@@ -157,7 +195,7 @@ with_growth_rates %>%
 
 ```{r}
 with_outlier_info =
-  jhu_csse_daily_subset %>%
+  completed_jhu_csse_daily_subset %>%
   group_by(geo_value) %>%
   mutate(cases_outlier_info = detect_outlr_rm(time_value, cases)) %>%
   ungroup()
@@ -203,7 +241,7 @@ with_outlier_info %>%
 
 ```{r}
 cors =
-  jhu_csse_daily_subset %>%
+  completed_jhu_csse_daily_subset %>%
   epi_cor(death_rate_7d_av, case_rate_7d_av,
           dt2 = -21L,
           cor_by = "time_value",
@@ -233,9 +271,9 @@ cors %>%
   ggplot(aes(x = time_value, y = cor)) +
   geom_line(na.rm=TRUE) +
   geom_line(aes(y=death_rate_7d_av, colour=geo_value),
-            jhu_csse_daily_subset %>% mutate(facet = cor_facets[[2L]])) +
+            completed_jhu_csse_daily_subset %>% mutate(facet = cor_facets[[2L]])) +
   geom_line(aes(y=case_rate_7d_av, colour=geo_value),
-            jhu_csse_daily_subset %>%
+            completed_jhu_csse_daily_subset %>%
               group_by(geo_value) %>%
               mutate(case_rate_7d_av = lag(case_rate_7d_av, 21L)) %>%
               ungroup() %>%
@@ -259,9 +297,9 @@ Optionally-grouped, rolling time window calculations:
 sum_of_k_else_na = function(x, k) {
   if (length(x) == k) sum(x) else NA
 }
-n_geos = nrow(distinct(jhu_csse_daily_subset, geo_value))
+n_geos = nrow(distinct(completed_jhu_csse_daily_subset, geo_value))
 with_sum_features =
-  jhu_csse_daily_subset %>%
+  completed_jhu_csse_daily_subset %>%
   select(geo_value, time_value, cases) %>%
   group_by(geo_value) %>%
   epi_slide(same_geo_7d_sum = sum_of_k_else_na(cases, 7L), n=7L) %>%
