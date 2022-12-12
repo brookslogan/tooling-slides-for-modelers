@@ -361,6 +361,8 @@ archive_cases_dv_subset$DT
 
 <!-- TODO note stuff about we provide an interface that removes the extra worries when dealing directly with `data.table`s -->
 
+<!-- FIXME move notes so that they render on the right slides -->
+
 ## Examining an `epi_archive`
 
 Some snapshots of an outpatient %CLI signal for FL:
