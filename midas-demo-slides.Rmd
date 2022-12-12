@@ -31,6 +31,13 @@ output:
 ```
 
 ```{r, echo=FALSE}
+library(epiprocess)
+library(dplyr)
+library(tidyr)
+library(tibble)
+library(purrr)
+library(ggplot2)
+
 theme_set(theme_bw())
 ```
 
@@ -109,13 +116,6 @@ withr::with_options(
 Snapshot of an epi surveillance data set; a specialized data frame.
 
 ```{r}
-library(epiprocess)
-library(dplyr)
-library(tidyr)
-library(tibble)
-library(purrr)
-library(ggplot2)
-
 jhu_csse_daily_subset
 ```
 
