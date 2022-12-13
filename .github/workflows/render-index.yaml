@@ -39,6 +39,7 @@ jobs:
     permissions:
       pages: write      # to deploy to Pages
       id-token: write   # to verify the deployment originates from an appropriate source
+      contents: read    # attempt to address https://stackoverflow.com/questions/72504998/github-actions-unable-to-get-actions-id-token-request-url-env-variable even with other permissions set
     steps:
       - name: Deploy pages
         uses: actions/deploy-pages@v1.2.3
