@@ -9,7 +9,8 @@ output:
   revealjs::revealjs_presentation:
     theme: night
     highlight: zenburn
-    # Nicer, but larger:
+    transition: convex
+    # Nicer, but takes more disk space:
     self_contained: false
     reveal_plugins: ["notes","search","menu"]
     #
