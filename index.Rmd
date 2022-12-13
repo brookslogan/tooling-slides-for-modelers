@@ -17,6 +17,25 @@ output:
     # self_contained: true
 ---
 
+# Context
+
+Last year
+: software community working group developed initial ~~`epitools`~~ `epiprocess` package
+
+This year
+: Delphi iterated on / developed `epiprocess`, `epipredict`, `epidat{r,py}`
+
+This presentation
+: Focus: capabilities of `epiprocess`
+
+Note
+: We're in the middle of changes to the `epiprocess` interface to improve
+  first-time use. We hope to have these done by the beginning of next semester.
+
+<!-- Some front matter is placed here rather than above in order to avoid
+generating an empty slide between the title slide and the first real non-title
+slide: -->
+
 <!-- Show & update continuously with
 `xaringan::inf_mr("index.Rmd")`.
 -->
@@ -61,9 +80,9 @@ knitr::knit_hooks$set(plot = function(x, options) {
 })
 ```
 
-# TODO package author slide & working group background
+<!-- TODO change this back to have epidatr, epidatpy below -->
 
-# {data-background-image=`r xfun::base64_uri("resources/ToolingOverview.png")`}
+## {data-background-image=`r xfun::base64_uri("resources/ToolingOverview.png")`}
 
 # `{epiprocess}`
 
@@ -115,7 +134,7 @@ makes:
 
  - `time_value`s evenly spaced
  - `time_value`s the same for every geo
- - filled-in measurements (rows) have NA values
+ - filled-in measurements (new rows) have NA values
 
 Unchecked requirements of some functions in `dplyr`, `epiprocess`
 
@@ -136,14 +155,12 @@ Alternative approach:
 - `time_value` range can differ by geo
 - filled-in measurements (rows) have NA values except `cases` uses 0s
 
-Have `complete.epi_df` method on list of todos.
+Have `complete.epi_df` method on our list of todos.
 
 Actually, both of these are identical to the original, since the original already was complete in the first sense, and was arranged in the same way.
 :::
 
 ## `epiprocess::growth_rate`
-
-<!-- FIXME discuss completion approaches -->
 
 ```{r, message=FALSE, warning=FALSE}
 # Note that the `jhu_csse_daily_subset` object already contains regularly-spaced
@@ -362,6 +379,8 @@ archive_cases_dv_subset$DT
 
 <!-- FIXME move notes so that they render on the right slides -->
 
+<!-- TODO direction slide -->
+
 ## Examining an `epi_archive`
 
 Some snapshots of an outpatient %CLI signal for FL:
@@ -470,25 +489,36 @@ but are in other disease forecasting targets and predictors
 | Vectors         | `epi_df`s         |              `epi_archive`s |
 |:---------------:|:-----------------:|----------------------------:|
 |                 |                   |                             |
+|                 |                   |                             |
+|                 |                   |                             |
 | `growth_rate`   | `epi_cor`         |                             |
 | `detect_outlr*` |                   |                             |
 |                 |                   |                             |
-|                 |                   |                `epix_as_of` |
+|                 |                   |                             |
 |                 |                   |                             |
 |                 | `dplyr::*`        |                             |
-|                 | `tsibble` interop |                             |
-|                 |                   |                             |
+|                 | `tsibble` interop |                `epix_as_of` |
 |                 | `epi_slide`       |                `epix_slide` |
+|                 |                   |                             |
+|                 |                   |                             |
+|                 |                   |                             |
+|                 | sample data sets  |             sample data set |
+|                 |                   |                             |
+|                 |                   |                             |
 |                 |                   |                             |
 |                 |                   | `epix_fill_through_version` |
 |                 |                   |                `epix_merge` |
 |                 |                   |                             |
-|                 | toy data set      |                toy data set |
-
-# TODO `{epidatr}`
+|                 |                   |                             |
 
 # `{epipredict}`
 
 <https://cmu-delphi.github.io/epipredict>
 
-## TODO borrow Dan's slides / changelog
+<!-- TODO borrow Dan's slides / changelog -->
+
+# `{epidatr}`, `{epidatpy}`
+
+<https://github.com/cmu-delphi/epidatr>
+
+<https://github.com/cmu-delphi/epidatpy>
