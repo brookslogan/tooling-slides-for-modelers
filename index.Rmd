@@ -2,19 +2,18 @@
 title: "Tooling update"
 author: "Slides: Logan Brooks, Daniel McDonald, Ryan Tibshirani"
 #
-# NOTE this link may be required here by upstream GPL-3 slides
-date: 2022-12-13 <br /> <small> <https://github.com/brookslogan/tooling-slides-for-modelers> </small>
+# NOTE KEEP THESE LINKS; they may be required here by upstream GPL-3 slides, CC attribution
+date: "2022-12-13 <br /> <small> View online: <https://brookslogan.github.io/tooling-slides-for-modelers/> <br /> Source: <https://github.com/brookslogan/tooling-slides-for-modelers/> </small>"
 #
 output:
   revealjs::revealjs_presentation:
     theme: night
     highlight: zenburn
     # Nicer, but larger:
-    #
     self_contained: false
     reveal_plugins: ["notes","search","menu"]
     #
-    # Self-contained html:
+    # # Self-contained html:
     # self_contained: true
 ---
 
