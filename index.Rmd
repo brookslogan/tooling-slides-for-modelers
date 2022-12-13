@@ -19,7 +19,7 @@ output:
 ---
 
 <!-- Show & update continuously with
-`xaringan::inf_mr("midas-demo-slides.Rmd")`.
+`xaringan::inf_mr("index.Rmd")`.
 -->
 
 <!-- Add scroll bars within slides: -->
