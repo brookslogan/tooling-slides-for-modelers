@@ -21,7 +21,7 @@ output:
 # Context
 
 Last year
-: software community working group developed initial ~~`epitools`~~ `epiprocess` package
+: software community working group scoped out initial ~~`epitools`~~ `epiprocess` package
 
 This year
 : Delphi iterated on / developed `epiprocess`, `epipredict`, `epidat{r,py}`
@@ -210,6 +210,8 @@ with_growth_rates %>%
 
 ## `epiprocess::detect_outlr*`
 
+Contributed by Evan Ray.
+
 ```{r}
 with_outlier_info =
   completed_jhu_csse_daily_subset %>%
@@ -217,6 +219,9 @@ with_outlier_info =
   mutate(cases_outlier_info = detect_outlr_rm(time_value, cases)) %>%
   ungroup()
 ```
+
+* `_rm` = "rolling median"
+* Additional methods\&settings (including ensemble approaches) available.
 
 `r previous_l2_heading`
 
@@ -246,7 +251,7 @@ with_outlier_info %>%
 ::: notes
 - Several methods and parameter settings for defining growth rates are provided
 - Ensembling
-- Correction
+- Correction (just simple replacement correction scheme right now, not backdistribution, iterative, etc.)
 - This plot shows retrospective corrections for the time series, not real-time corrections; to see what the real-time calculations would have looked like, we'd use `epix_slide`, discussed later
 :::
 
@@ -512,14 +517,41 @@ but are in other disease forecasting targets and predictors
 |                 |                   |                             |
 |                 |                   |                             |
 
-# `{epipredict}`
+# Next presentations
+
+## `{epipredict}`
 
 <https://cmu-delphi.github.io/epipredict>
 
-<!-- TODO borrow Dan's slides / changelog -->
+<section style="text-align: left">
 
-# `{epidatr}`, `{epidatpy}`
+General idea: provide
+
+* a set of basic, easy-to-use forecasters that work out of the box, with reasonably limited customization, e.g.:
+
+  * baseline flat-line forecaster
+  * autoregressive forecaster
+  * autoregressive classifier
+
+* a framework for creating custom forecasters out of modular components
+
+</section>
+
+(See some slides prepared in September [here](https://dajmcdon.github.io/delphi-research-tooling/#7).)
+
+## `{epidatr}`, `{epidatpy}`
 
 <https://github.com/cmu-delphi/epidatr>
 
 <https://github.com/cmu-delphi/epidatpy>
+
+
+<section style="text-align: left">
+
+Successors to Delphi Epidata API functionality in `delphi_epidata`, `covidcast` R and Python packages.
+
+* faster downloads
+* more consistent interfaces across endpoints
+* friendlier interfaces (longer-term)
+
+</section>
