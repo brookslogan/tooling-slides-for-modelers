@@ -431,7 +431,10 @@ slide_result =
     group_snapshot = list(.x),
     coefs = .x %>%
       complete(time_value = full_seq(time_value, 1L)) %>%
-      lm(formula = case_rate_7d_av ~ lag(case_rate_7d_av, 7L) + lag(case_rate_7d_av, 14L) + 0) %>%
+      lm(formula = case_rate_7d_av ~
+           lag(case_rate_7d_av, 7L) +
+           lag(case_rate_7d_av, 14L) +
+           0) %>%
       coef() %>%
       list()
   ),
