@@ -1,4 +1,4 @@
-# Workflow derived from https://github.com/r-lib/actions/tree/v2/examples
+# Workflow derived from https://github.com/r-lib/actions/tree/v2/examples, https://github.com/actions/deploy-pages
 # Need help debugging build failures? Start at https://github.com/r-lib/actions#where-to-find-help
 on:
   push:
@@ -27,8 +27,18 @@ jobs:
         run: |
           Rscript -e 'rmarkdown::render("index.Rmd", output_dir="_site")'
 
+  upload-index:
+    needs: render-index
+    steps:
       - name: Upload index pages artifact
         uses: actions/upload-pages-artifact@v1.0.6
 
+  deploy-index:
+    needs: upload-index
+    # Grant GITHUB_TOKEN the permissions required to make a Pages deployment
+    permissions:
+      pages: write      # to deploy to Pages
+      id-token: write   # to verify the deployment originates from an appropriate source
+    steps:
       - name: Deploy pages
         uses: actions/deploy-pages@v1.2.3
