@@ -126,7 +126,7 @@ withr::with_options(
 ```{r}
 completed_jhu_csse_daily_subset =
   jhu_csse_daily_subset %>%
-  complete(geo_value, time_value = full_seq(time_value, period=1), explicit=FALSE) %>%
+  complete(geo_value, time_value = full_seq(time_value, period=1)) %>%
   as_epi_df(as_of = attr(jhu_csse_daily_subset, "metadata")$as_of)
 ```
 
@@ -137,7 +137,7 @@ makes:
  - `time_value`s the same for every geo
  - filled-in measurements (new rows) have NA values
 
-Unchecked requirements of some functions in `dplyr`, `epiprocess`
+(these are unchecked requirements of some functions in `dplyr`, `epiprocess`)
 
 </section>
 
@@ -145,7 +145,8 @@ Unchecked requirements of some functions in `dplyr`, `epiprocess`
 alternative_completed_jhu_csse_daily_subset =
   jhu_csse_daily_subset %>%
   group_by(geo_value) %>%
-  complete(time_value = full_seq(time_value, period=1), fill=list(cases=0), explicit=FALSE) %>%
+  complete(time_value = full_seq(time_value, period=1),
+           fill=list(cases=0), explicit=FALSE) %>%
   ungroup() %>%
   as_epi_df(as_of = attr(jhu_csse_daily_subset, "metadata")$as_of)
 ```
@@ -159,14 +160,18 @@ Alternative approach:
 Have `complete.epi_df` method on our list of todos.
 
 Actually, both of these are identical to the original, since the original already was complete in the first sense, and was arranged in the same way.
+
+Another option would be to convert to&from tsibble and use `tsibble::fill_gaps`.
 :::
 
 ## `epiprocess::growth_rate`
 
+::: notes
+- Several methods and parameter settings for defining growth rates are provided
+- E.g., gr1 here is using a relative change of counts in a small window, which is more heavily impacted by the negative blip around July 2021 than gr2.  We might try a different change rate calculation like gr2, or outlier removal.
+:::
+
 ```{r, message=FALSE, warning=FALSE}
-# Note that the `jhu_csse_daily_subset` object already contains regularly-spaced
-# time values, and the same time values for every geo value, so it doesn't
-# require preprocessing via `complete`.
 with_growth_rates =
   completed_jhu_csse_daily_subset %>%
   group_by(geo_value) %>%
@@ -203,11 +208,6 @@ with_growth_rates %>%
 
 <!-- TODO add direction annotations derived from these growth rates? -->
 
-::: notes
-- Several methods and parameter settings for defining growth rates are provided
-- E.g., gr1 here is using a relative change of counts in a small window, which is more heavily impacted by the negative blip around July 2021 than gr2.  We might try a different change rate calculation like gr2, or outlier removal.
-:::
-
 ## `epiprocess::detect_outlr*`
 
 Contributed by Evan Ray.
@@ -222,6 +222,13 @@ with_outlier_info =
 
 * `_rm` = "rolling median"
 * Additional methods\&settings (including ensemble approaches) available.
+
+::: notes
+- Several methods and parameter settings for outlier detection are provided
+- Ensembling
+- Correction (just simple replacement correction scheme right now, not backdistribution, iterative, etc.)
+- This plot shows retrospective corrections for the time series, not real-time corrections; to see what the real-time calculations would have looked like, we'd use `epix_slide`, discussed later
+:::
 
 `r previous_l2_heading`
 
@@ -248,13 +255,6 @@ with_outlier_info %>%
             colour = "blue")
 ```
 
-::: notes
-- Several methods and parameter settings for defining growth rates are provided
-- Ensembling
-- Correction (just simple replacement correction scheme right now, not backdistribution, iterative, etc.)
-- This plot shows retrospective corrections for the time series, not real-time corrections; to see what the real-time calculations would have looked like, we'd use `epix_slide`, discussed later
-:::
-
 <!-- TODO point to / mention full vignettes for each topic? -->
 
 <!-- TODO crediting Evan & others -->
@@ -279,6 +279,12 @@ Kendall correlations
 - by `time_value`
 
 </section>
+
+::: notes
+- Note there are only 6 geos in this example data object.
+- Roughly, do weekly case rates 21 days ago seem helpful in determining whether one state will have higher weekly death rates than another, and does that usefulness vary across time?
+- Since this is only using a few locations, extreme values are expected to be more common.
+:::
 
 `r previous_l2_heading`
 
@@ -306,15 +312,9 @@ cors %>%
   labs(x = "Date", y = "Correlation")
 ```
 
-::: notes
-- Note there are only 6 geos in this example data object.
-- Roughly, do weekly case rates 21 days ago seem helpful in determining whether one state will have higher weekly death rates than another, and does that usefulness vary across time?
-- Since this is only using a few locations, extreme values are expected to be more common.
-:::
-
 ## `epiprocess::epi_slide`
 
-Optionally-grouped, rolling time window calculations:
+Key functionality: optionally-grouped, rolling time window calculations:
 ```{r}
 sum_of_k_else_na = function(x, k) {
   if (length(x) == k) sum(x) else NA
@@ -371,8 +371,13 @@ withr::with_options(
 )
 ```
 
+::: notes
+* Easy to inspect revision behaviour
+* Can use it for pseudo-prospective forecasts
+* Compare to our procedure for the PNAS article &mdash; store every version as a `.csv` and load them individually
+:::
 
----
+##
 
 Underlying version data:
 ```{r}
@@ -414,17 +419,11 @@ ggplot(snapshots %>% filter(!latest),
             inherit.aes = FALSE, color = "black", na.rm=TRUE)
 ```
 
-::: notes
-* Easy to inspect revision behaviour
-* Can use it for pseudo-prospective forecasts
-* Compare to our procedure for the PNAS article &mdash; store every version as a `.csv` and load them individually
-:::
-
 <!-- TODO combine with the below -->
 
 ## `epiprocess::epix_slide`
 
-Version-aware counterpart to `epi_slide`; combines time windowing and as-of-ing.
+Key functionality: version-aware counterpart to `epi_slide`; combines time windowing and as-of-ing.
 ```{r}
 slide_result =
   archive_cases_dv_subset %>%
@@ -435,19 +434,24 @@ slide_result =
       lm(formula = case_rate_7d_av ~ lag(case_rate_7d_av, 7L) + lag(case_rate_7d_av, 14L) + 0) %>%
       coef() %>%
       list()
-  ), n=90L, group_by=geo_value, ref_time_values = seq(as.Date("2020-06-01")+89L, as.Date("2021-11-30"), by="week")) %>%
+  ),
+  n=90L,
+  group_by=geo_value,
+  ref_time_values = seq(as.Date("2020-06-01")+89L, as.Date("2021-11-30"), by="week")) %>%
   rename(as_of = time_value)
 ```
+
+<!-- NOTE want these notes on the `slide_result` printing slide, but can't seem to get it there, even by moving the notes farther up to unrelated slides. -->
+
+::: notes
+- (Note that data latency cuts into the amount of data available in the window.  For this JHU-CSSE case data, it's only 1 day out of the 90 day window, but we must be careful with indexing.)
+:::
 
 ## `epiprocess::epix_slide`
 
 ```{r}
 slide_result
 ```
-
-::: notes
-- (Note that data latency cuts into the amount of data available in the window.  For this JHU-CSSE case data, it's only 1 day out of the 90 day window, but we must be careful with indexing.)
-:::
 
 ## `epiprocess::epix_slide`
 
