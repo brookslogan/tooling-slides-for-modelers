@@ -422,6 +422,14 @@
       "Hash": "d07e729b27b372429d42d24d503613a0",
       "Requirements": []
     },
+    "khroma": {
+      "Package": "khroma",
+      "Version": "1.9.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "7e39a8daa5056daf017ace566e0d3d58",
+      "Requirements": []
+    },
     "knitr": {
       "Package": "knitr",
       "Version": "1.40",
