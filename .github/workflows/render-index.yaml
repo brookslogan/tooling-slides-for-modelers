@@ -4,10 +4,10 @@ on:
   push:
     branches: [ main ]
 
-name: render-rmarkdown
+name: render-index
 
 jobs:
-  render-rmarkdown:
+  render-index:
     runs-on: ubuntu-latest
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
@@ -25,8 +25,7 @@ jobs:
 
       - name: Render index
         run: |
-          Rscript -e 'rmarkdown::render("index.Rmd")'
-          tar -czvf github-pages index.html index_files/
+          Rscript -e 'rmarkdown::render("index.Rmd", output_dir="_site")'
 
       - name: Upload index pages artifact
         uses: actions/upload-pages-artifact@v1.0.6
