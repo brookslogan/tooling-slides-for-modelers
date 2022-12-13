@@ -9,8 +9,15 @@ name: render-index
 jobs:
   render-index:
     runs-on: ubuntu-latest
+
+    # Grant GITHUB_TOKEN the permissions required to make a Pages deployment
+    permissions:
+      pages: write      # to deploy to Pages
+      id-token: write   # to verify the deployment originates from an appropriate source
+
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+
     steps:
       - name: Checkout repo
         uses: actions/checkout@v3
@@ -27,19 +34,8 @@ jobs:
         run: |
           Rscript -e 'rmarkdown::render("index.Rmd", output_dir="_site")'
 
-  upload-index:
-    needs: render-index
-    steps:
       - name: Upload index pages artifact
         uses: actions/upload-pages-artifact@v1.0.6
 
-  deploy-index:
-    needs: upload-index
-    # Grant GITHUB_TOKEN the permissions required to make a Pages deployment
-    permissions:
-      pages: write      # to deploy to Pages
-      id-token: write   # to verify the deployment originates from an appropriate source
-      contents: read    # attempt to address https://stackoverflow.com/questions/72504998/github-actions-unable-to-get-actions-id-token-request-url-env-variable even with other permissions set
-    steps:
       - name: Deploy pages
         uses: actions/deploy-pages@v1.2.3
