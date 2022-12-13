@@ -274,8 +274,8 @@ cors =
 
 Kendall correlations
 
+- between death rates and case rates 21 days prior
 - across `geo_value`s (only 6 of them in this sample data)
-- between death and case rates 21 days prior
 - by `time_value`
 
 </section>
